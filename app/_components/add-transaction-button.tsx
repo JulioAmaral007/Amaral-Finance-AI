@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip'
-import UpsertTransactionDialog from './upsert-transaction-dialog'
+import { UpsertTransactionDialog } from './upsert-transaction-dialog'
 
 interface AddTransactionButtonProps {
   userCanAddTransaction?: boolean

@@ -44,14 +44,14 @@ export default async function Home({ searchParams: { month } }: HomeProps) {
             <TimeSelect />
           </div>
         </div>
-        <div className="flex h-full flex-col gap-6 overflow-hidden lg:grid lg:grid-cols-[2fr,1fr]">
-          <div className="flex flex-col gap-6 overflow-hidden">
+        <div className="flex h-full flex-col gap-5 overflow-hidden lg:grid lg:grid-cols-[2fr,1fr]">
+          <div className="flex flex-col gap-5 overflow-hidden">
             <SummaryCards
               month={month}
               {...dashboard}
               userCanAddTransaction={userCanAddTransaction}
             />
-            <div className="flex max-h-full flex-col overflow-hidden md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3 lg:flex-row">
+            <div className="flex max-h-full flex-col gap-5 overflow-hidden md:grid md:grid-cols-2 lg:grid-cols-3 lg:flex-row">
               <TransactionsPieChart {...dashboard} />
               <ExpensesPerCategory
                 expensesPerCategory={dashboard.totalExpensePerCategory}

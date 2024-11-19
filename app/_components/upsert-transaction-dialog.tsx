@@ -14,6 +14,7 @@ import {
 } from '../_constants/transactions'
 import { MoneyInput } from './money-input'
 import { Button } from './ui/button'
+import { Checkbox } from './ui/checkbox'
 import { DatePicker } from './ui/date-picker'
 import {
   Dialog,
@@ -65,6 +66,8 @@ const formSchema = z.object({
   date: z.date({
     required_error: 'A data é obrigatória.',
   }),
+  repeatMonths: z.number().optional(),
+  repeat: z.boolean().optional(),
 })
 
 type FormSchema = z.infer<typeof formSchema>
@@ -76,31 +79,54 @@ interface UpsertTransactionDialogProps {
   setIsOpen: (isOpen: boolean) => void
 }
 
-const UpsertTransactionDialog = ({
+export function UpsertTransactionDialog({
   isOpen,
   defaultValues,
   transactionId,
   setIsOpen,
-}: UpsertTransactionDialogProps) => {
+}: UpsertTransactionDialogProps) {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues ?? {
-      amount: 50,
-      category: TransactionCategory.OTHER,
+      amount: 0,
+      category: TransactionCategory.FOOD,
       date: new Date(),
       name: '',
-      paymentMethod: TransactionPaymentMethod.CASH,
+      paymentMethod: TransactionPaymentMethod.CREDIT_CARD,
       type: TransactionType.EXPENSE,
+      repeatMonths: 0,
+      repeat: false,
     },
   })
 
   const onSubmit = async (data: FormSchema) => {
     try {
       await upsertTransaction({ ...data, id: transactionId })
+
+      if (
+        data.repeat &&
+        data.repeatMonths !== undefined &&
+        data.repeatMonths > 0
+      ) {
+        const promises = Array.from({ length: data.repeatMonths }).map(
+          (_, i) => {
+            const newDate = new Date(data.date)
+            newDate.setMonth(newDate.getMonth() + i + 1)
+            return upsertTransaction({
+              ...data,
+              id: undefined,
+              date: newDate,
+            })
+          },
+        )
+
+        await Promise.all(promises)
+      }
+
       setIsOpen(false)
       form.reset()
     } catch (error) {
-      console.error(error)
+      console.error('Erro ao salvar transação:', error)
     }
   }
 
@@ -117,7 +143,7 @@ const UpsertTransactionDialog = ({
       }}
     >
       <DialogTrigger asChild></DialogTrigger>
-      <DialogContent>
+      <DialogContent className="w-[355px] space-y-3 rounded-xl md:w-auto">
         <DialogHeader>
           <DialogTitle>
             {isUpdate ? 'Atualizar' : 'Criar'} transação
@@ -126,7 +152,7 @@ const UpsertTransactionDialog = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             <FormField
               control={form.control}
               name="name"
@@ -140,120 +166,167 @@ const UpsertTransactionDialog = ({
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-2 md:gap-5">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      <MoneyInput
+                        placeholder="Digite o valor..."
+                        value={field.value}
+                        onValueChange={({ floatValue }) =>
+                          field.onChange(floatValue)
+                        }
+                        onBlur={field.onBlur}
+                        disabled={field.disabled}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a verified email to display" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TRANSACTION_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 md:gap-5">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a categoria..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TRANSACTION_CATEGORY_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Método de pagamento</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um método de pagamento..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TRANSACTION_PAYMENT_METHOD_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="amount"
+              name="repeat"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor</FormLabel>
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormLabel>Repetir mensalmente?</FormLabel>
                   <FormControl>
-                    <MoneyInput
-                      placeholder="Digite o valor..."
-                      value={field.value}
-                      onValueChange={({ floatValue }) =>
-                        field.onChange(floatValue)
-                      }
-                      onBlur={field.onBlur}
-                      disabled={field.disabled}
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+
+            <div className="flex flex-col md:grid md:grid-cols-2 md:gap-5">
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data</FormLabel>
+                    <DatePicker value={field.value} onChange={field.onChange} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="repeatMonths"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantos meses repetir?</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a verified email to display" />
-                      </SelectTrigger>
+                      <Input
+                        type="number"
+                        placeholder="Digite o número de meses..."
+                        value={field.value}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        onBlur={field.onBlur}
+                        disabled={!form.watch('repeat')}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {TRANSACTION_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a categoria..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {TRANSACTION_CATEGORY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="paymentMethod"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Método de pagamento</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um método de pagamento..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {TRANSACTION_PAYMENT_METHOD_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data</FormLabel>
-                  <DatePicker value={field.value} onChange={field.onChange} />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter className="gap-2 md:gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline">
                   Cancelar
@@ -269,5 +342,3 @@ const UpsertTransactionDialog = ({
     </Dialog>
   )
 }
-
-export default UpsertTransactionDialog
