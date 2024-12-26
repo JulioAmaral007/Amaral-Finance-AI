@@ -1,1 +1,3 @@
 tailwind.config.ts
+./app/(home)/_actions
+./app/(home)/_components/ai-report-button.tsx
