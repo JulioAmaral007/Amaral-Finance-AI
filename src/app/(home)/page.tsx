@@ -3,6 +3,7 @@ import { isMatch } from 'date-fns'
 import { redirect } from 'next/navigation'
 import Navbar from '../_components/navbar'
 import ExpensesPerCategory from './_components/expenses-per-category'
+import LastTransactions from './_components/last-transactions'
 import SummaryCards from './_components/summary-cards'
 import TimeSelect from './_components/time-select'
 import TransactionsPieChart from './_components/transactions-pie-chart'
@@ -35,6 +36,7 @@ export default async function Home({ searchParams: { month } }: HomeProps) {
               <ExpensesPerCategory expensesPerCategory={dashboard.totalExpensePerCategory} />
             </div>
           </div>
+          <LastTransactions lastTransactions={dashboard.lastTransactions} />
         </div>
       </div>
     </main>
