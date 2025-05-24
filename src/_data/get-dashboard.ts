@@ -25,7 +25,7 @@ export const getDashboard = async (month: string) => {
         where: { ...where, type: 'DEPOSIT' },
         _sum: { amount: true },
       })
-    )?._sum?.amount
+    )?._sum?.amount || 0
   )
 
   const investmentsTotal = Number(
@@ -34,7 +34,7 @@ export const getDashboard = async (month: string) => {
         where: { ...where, type: 'INVESTMENT' },
         _sum: { amount: true },
       })
-    )?._sum?.amount
+    )?._sum?.amount || 0
   )
 
   const expensesTotal = Number(
@@ -43,7 +43,7 @@ export const getDashboard = async (month: string) => {
         where: { ...where, type: 'EXPENSE' },
         _sum: { amount: true },
       })
-    )?._sum?.amount
+    )?._sum?.amount || 0
   )
 
   const balance = depositsTotal - investmentsTotal - expensesTotal
@@ -53,19 +53,13 @@ export const getDashboard = async (month: string) => {
         where,
         _sum: { amount: true },
       })
-    )._sum.amount
+    )._sum.amount || 0
   )
 
   const typesPercentage: TransactionPercentagePerType = {
-    [TransactionType.DEPOSIT]: Math.round(
-      (Number(depositsTotal || 0) / Number(transactionsTotal)) * 100
-    ),
-    [TransactionType.EXPENSE]: Math.round(
-      (Number(expensesTotal || 0) / Number(transactionsTotal)) * 100
-    ),
-    [TransactionType.INVESTMENT]: Math.round(
-      (Number(investmentsTotal || 0) / Number(transactionsTotal)) * 100
-    ),
+    [TransactionType.DEPOSIT]: Math.round((depositsTotal / transactionsTotal) * 100),
+    [TransactionType.EXPENSE]: Math.round((expensesTotal / transactionsTotal) * 100),
+    [TransactionType.INVESTMENT]: Math.round((investmentsTotal / transactionsTotal) * 100),
   }
 
   const totalExpensePerCategory: TotalExpensePerCategory[] = (
@@ -81,15 +75,20 @@ export const getDashboard = async (month: string) => {
     })
   ).map(category => ({
     category: category.category,
-    totalAmount: Number(category._sum.amount),
-    percentageOfTotal: Math.round((Number(category._sum.amount) / Number(expensesTotal)) * 100),
+    totalAmount: Number(category._sum.amount || 0),
+    percentageOfTotal: Math.round((Number(category._sum.amount || 0) / expensesTotal) * 100),
   }))
 
-  const lastTransactions = await db.transaction.findMany({
-    where,
-    orderBy: { date: 'desc' },
-    take: 15,
-  })
+  const lastTransactions = (
+    await db.transaction.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      take: 15,
+    })
+  ).map(transaction => ({
+    ...transaction,
+    amount: Number(transaction.amount),
+  }))
 
   return {
     balance,
