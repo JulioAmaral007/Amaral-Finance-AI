@@ -24,11 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark [color-scheme:dark]" suppressHydrationWarning>
       <body
-        className={`${mulish.variable} ${mulish.className} min-h-screen bg-background font-sans antialiased`}
+        className={`${mulish.variable} ${mulish.className} bg-background font-sans antialiased`}
       >
-        <div className="relative flex min-h-screen flex-col overflow-hidden">
-          <div className="flex-1">{children}</div>
-        </div>
+        <div className="h-dvh">{children}</div>
       </body>
     </html>
   )

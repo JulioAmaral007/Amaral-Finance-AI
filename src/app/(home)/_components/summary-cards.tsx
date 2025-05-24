@@ -16,7 +16,7 @@ export async function SummaryCards({
   investmentsTotal,
 }: SummaryCards) {
   return (
-    <div className="space-y-6">
+    <div className="h-full space-y-3">
       {/* PRIMEIRO CARD */}
       <SummaryCard
         icon={<WalletIcon size={16} className="text-primary" />}

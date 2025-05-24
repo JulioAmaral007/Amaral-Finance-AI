@@ -28,7 +28,7 @@ export function LastTransactions({ lastTransactions }: LastTransactionsProps) {
     return '-'
   }
   return (
-    <ScrollArea className="rounded-lg border border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <ScrollArea className="h-full rounded-lg border border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <CardHeader className="flex-row items-center justify-between border-b border-border/40 px-6 py-4">
         <CardTitle className="text-lg font-semibold tracking-tight">Últimas Transações</CardTitle>
         <Button

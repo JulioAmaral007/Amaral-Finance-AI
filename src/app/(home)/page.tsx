@@ -1,7 +1,8 @@
 import { getDashboard } from '@/_data/get-dashboard'
+import { Decimal } from '@prisma/client/runtime/library'
 import { isMatch } from 'date-fns'
 import { redirect } from 'next/navigation'
-import { Navbar } from '../_components/navbar'
+import { Sidebar } from '../_components/sidebar'
 import { ExpensesPerCategory } from './_components/expenses-per-category'
 import { LastTransactions } from './_components/last-transactions'
 import { SummaryCards } from './_components/summary-cards'
@@ -9,36 +10,48 @@ import { TimeSelect } from './_components/time-select'
 import { TransactionsPieChart } from './_components/transactions-pie-chart'
 
 interface HomeProps {
-  searchParams: {
-    month: string
-  }
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export default async function Home({ searchParams: { month } }: HomeProps) {
+export default async function Home({ searchParams }: HomeProps) {
+  const month = searchParams?.month as string | undefined
   const monthIsInvalid = !month || !isMatch(month, 'MM')
+
   if (monthIsInvalid) {
-    redirect(`?month=${new Date().getMonth() + 1}`)
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0')
+    redirect(`?month=${currentMonth}`)
   }
   const dashboard = await getDashboard(month)
   return (
-    <main className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto space-y-6 p-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <TimeSelect />
-        </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr,1fr]">
-          <div className="flex flex-col gap-6">
-            <SummaryCards month={month} {...dashboard} />
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <TransactionsPieChart {...dashboard} />
-              <ExpensesPerCategory expensesPerCategory={dashboard.totalExpensePerCategory} />
+    <div className="flex bg-background">
+      <Sidebar />
+      <main className="h-dvh w-full max-w-screen-2xl mx-auto">
+        <div className="flex flex-col space-y-4 p-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <div className="flex items-center gap-3">
+              <TimeSelect />
             </div>
           </div>
-          <LastTransactions lastTransactions={dashboard.lastTransactions} />
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+            <div className="flex h-min flex-col gap-3 col-span-3">
+              <SummaryCards month={month} {...dashboard} />
+              <div className="grid h-min grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <TransactionsPieChart {...dashboard} />
+                <ExpensesPerCategory expensesPerCategory={dashboard.totalExpensePerCategory} />
+              </div>
+            </div>
+            <div className="h-[calc(100dvh-100px)] col-span-1">
+              <LastTransactions
+                lastTransactions={dashboard.lastTransactions.map(transaction => ({
+                  ...transaction,
+                  amount: new Decimal(transaction.amount),
+                }))}
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }

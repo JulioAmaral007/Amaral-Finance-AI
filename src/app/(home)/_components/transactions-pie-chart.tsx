@@ -60,7 +60,7 @@ export function TransactionsPieChart({
     },
   ]
   return (
-    <Card className="flex flex-col p-6 transition-all hover:shadow-md sm:p-8 md:p-12">
+    <Card className="flex h-full flex-col p-3 transition-all hover:shadow-md">
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
