@@ -8,7 +8,7 @@ interface ExpensesPerCategoryProps {
   expensesPerCategory: TotalExpensePerCategory[]
 }
 
-export default function ExpensesPerCategory({ expensesPerCategory }: ExpensesPerCategoryProps) {
+export function ExpensesPerCategory({ expensesPerCategory }: ExpensesPerCategoryProps) {
   return (
     <ScrollArea className="col-span-2 h-full rounded-lg border border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <CardHeader className="border-b border-border/40 px-6 py-4">

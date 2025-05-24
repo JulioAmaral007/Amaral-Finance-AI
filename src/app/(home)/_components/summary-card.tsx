@@ -9,7 +9,7 @@ interface SummaryCardProps {
   size?: 'small' | 'large'
 }
 
-export default function SummaryCard({ icon, title, amount, size = 'small' }: SummaryCardProps) {
+export function SummaryCard({ icon, title, amount, size = 'small' }: SummaryCardProps) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="flex-row items-center gap-4">

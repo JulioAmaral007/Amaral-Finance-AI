@@ -11,7 +11,7 @@ interface LastTransactionsProps {
   lastTransactions: Transaction[]
 }
 
-export default function LastTransactions({ lastTransactions }: LastTransactionsProps) {
+export function LastTransactions({ lastTransactions }: LastTransactionsProps) {
   const getAmountColor = (transaction: Transaction) => {
     if (transaction.type === TransactionType.EXPENSE) {
       return 'text-red-500'

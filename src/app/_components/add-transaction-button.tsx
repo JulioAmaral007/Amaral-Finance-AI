@@ -69,7 +69,7 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>
 
-export default function AddTransactionButton() {
+export function AddTransactionButton() {
   const [dialogIsOpen, setDialogIsOpen] = useState(false)
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),

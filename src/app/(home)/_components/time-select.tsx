@@ -24,7 +24,7 @@ const MONTH_OPTIONS = [
   { value: '12', label: 'Dezembro' },
 ]
 
-export default function TimeSelect() {
+export function TimeSelect() {
   const { push } = useRouter()
   const searchParams = useSearchParams()
   const month = searchParams.get('month')
