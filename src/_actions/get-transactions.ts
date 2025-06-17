@@ -3,8 +3,6 @@
 import { db } from '@/_lib/prisma'
 
 export async function getTransactions() {
-  console.log('Buscando todas as transações...')
-
   const transactions = await db.transaction.findMany({
     orderBy: { date: 'desc' },
     select: {

@@ -64,7 +64,6 @@ export default function PlanningPage() {
         }
       })
 
-      console.log('Despesas formatadas:', formattedExpenses)
       setExpenses(formattedExpenses)
     } catch (error) {
       console.error('Erro ao carregar transações:', error)
@@ -111,7 +110,6 @@ export default function PlanningPage() {
 
     // Distribui as despesas pelos meses
     const allExpenses = [...expenses, ...scenarios]
-    console.log('Todas as despesas:', allExpenses)
 
     for (const expense of allExpenses) {
       const startMonth = getMonthNumber(expense.startDate)
@@ -147,7 +145,6 @@ export default function PlanningPage() {
       month.totalProjected = month.fixedExpenses + month.activeParcels
     }
 
-    console.log('Meses calculados:', months)
     return months
   }
 

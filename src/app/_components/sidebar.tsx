@@ -53,15 +53,15 @@ export function Sidebar() {
           {!isCollapsed && <span>Dashboard</span>}
         </Link>
         <Link
-          href="/transactions"
+          href="/planning"
           className={`flex items-center justify-center gap-2 rounded-lg p-2 transition-colors hover:bg-accent ${
-            pathname === '/transactions'
+            pathname === '/planning'
               ? 'bg-accent font-semibold text-primary'
               : 'text-muted-foreground'
           }`}
         >
           <Receipt className="h-5 w-5" />
-          {!isCollapsed && <span>Transações</span>}
+          {!isCollapsed && <span>Planejamento</span>}
         </Link>
         <Link
           href="/subscription"
