@@ -12,12 +12,29 @@ export interface TotalExpensePerCategory {
 }
 
 export const getDashboard = async (month: string) => {
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0')
+  const selectedMonth = month || currentMonth
+
   const where = {
     date: {
-      gte: new Date(`2024-${month}-01`),
-      lt: new Date(`2024-${month}-31`),
+      gte: new Date(`${currentYear}-${selectedMonth}-01`),
+      lt: new Date(`${currentYear}-${selectedMonth}-31`),
     },
   }
+
+  // Buscar todas as transações do mês para debug
+  const allTransactions = await db.transaction.findMany({
+    where,
+    select: {
+      id: true,
+      name: true,
+      amount: true,
+      type: true,
+      date: true,
+    },
+  })
 
   const depositsTotal = Number(
     (
@@ -47,19 +64,15 @@ export const getDashboard = async (month: string) => {
   )
 
   const balance = depositsTotal - investmentsTotal - expensesTotal
-  const transactionsTotal = Number(
-    (
-      await db.transaction.aggregate({
-        where,
-        _sum: { amount: true },
-      })
-    )._sum.amount || 0
-  )
+  const transactionsTotal = depositsTotal + investmentsTotal + expensesTotal
 
   const typesPercentage: TransactionPercentagePerType = {
-    [TransactionType.DEPOSIT]: Math.round((depositsTotal / transactionsTotal) * 100),
-    [TransactionType.EXPENSE]: Math.round((expensesTotal / transactionsTotal) * 100),
-    [TransactionType.INVESTMENT]: Math.round((investmentsTotal / transactionsTotal) * 100),
+    [TransactionType.DEPOSIT]:
+      transactionsTotal > 0 ? Math.round((depositsTotal / transactionsTotal) * 100) : 0,
+    [TransactionType.EXPENSE]:
+      transactionsTotal > 0 ? Math.round((expensesTotal / transactionsTotal) * 100) : 0,
+    [TransactionType.INVESTMENT]:
+      transactionsTotal > 0 ? Math.round((investmentsTotal / transactionsTotal) * 100) : 0,
   }
 
   const totalExpensePerCategory: TotalExpensePerCategory[] = (
@@ -76,14 +89,29 @@ export const getDashboard = async (month: string) => {
   ).map(category => ({
     category: category.category,
     totalAmount: Number(category._sum.amount || 0),
-    percentageOfTotal: Math.round((Number(category._sum.amount || 0) / expensesTotal) * 100),
+    percentageOfTotal:
+      expensesTotal > 0 ? Math.round((Number(category._sum.amount || 0) / expensesTotal) * 100) : 0,
   }))
 
   const lastTransactions = (
     await db.transaction.findMany({
-      where,
       orderBy: { date: 'desc' },
       take: 15,
+      select: {
+        id: true,
+        name: true,
+        amount: true,
+        type: true,
+        category: true,
+        date: true,
+        createdAt: true,
+        updatedAt: true,
+        isFixed: true,
+        isInstallment: true,
+        currentInstallment: true,
+        totalInstallments: true,
+        installmentGroupId: true,
+      },
     })
   ).map(transaction => ({
     ...transaction,

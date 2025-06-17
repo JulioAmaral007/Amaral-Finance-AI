@@ -1,7 +1,7 @@
 import { PiggyBankIcon, TrendingDownIcon, TrendingUpIcon, WalletIcon } from 'lucide-react'
 import { SummaryCard } from './summary-card'
 
-interface SummaryCards {
+interface SummaryCardsProps {
   month: string
   balance: number
   depositsTotal: number
@@ -9,12 +9,13 @@ interface SummaryCards {
   expensesTotal: number
 }
 
-export async function SummaryCards({
+export function SummaryCards({
   balance,
   depositsTotal,
   expensesTotal,
   investmentsTotal,
-}: SummaryCards) {
+  month,
+}: SummaryCardsProps) {
   return (
     <div className="h-full space-y-3">
       {/* PRIMEIRO CARD */}

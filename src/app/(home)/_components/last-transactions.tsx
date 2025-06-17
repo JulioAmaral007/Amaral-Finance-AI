@@ -1,11 +1,25 @@
 import { Button } from '@/_components/ui/button'
 import { CardContent, CardHeader, CardTitle } from '@/_components/ui/card'
 import { ScrollArea } from '@/_components/ui/scroll-area'
-import { TRANSACTION_PAYMENT_METHOD_ICONS } from '@/_constants/transactions'
 import { formatCurrency } from '@/_lib/utils'
-import { type Transaction, TransactionType } from '@prisma/client'
-import Image from 'next/image'
+import { type TransactionCategory, TransactionType } from '@prisma/client'
 import Link from 'next/link'
+
+interface Transaction {
+  id: string
+  name: string
+  amount: number
+  type: TransactionType
+  category: TransactionCategory
+  date: Date
+  createdAt: Date
+  updatedAt: Date
+  isFixed: boolean
+  isInstallment: boolean
+  currentInstallment: number | null
+  totalInstallments: number | null
+  installmentGroupId: string | null
+}
 
 interface LastTransactionsProps {
   lastTransactions: Transaction[]
@@ -47,13 +61,7 @@ export function LastTransactions({ lastTransactions }: LastTransactionsProps) {
           >
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-white/5 p-3 text-white backdrop-blur supports-[backdrop-filter]:bg-white/10">
-                <Image
-                  src={`/${TRANSACTION_PAYMENT_METHOD_ICONS[transaction.paymentMethod]}`}
-                  height={20}
-                  width={20}
-                  alt={transaction.paymentMethod}
-                  className="h-5 w-5"
-                />
+                <div className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">{transaction.name}</p>

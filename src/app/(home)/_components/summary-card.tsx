@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from '@/_components/ui/card'
-// import AddTransactionButton from '@/app/_components/add-transaction-button'
+import { AddTransactionButton } from '@/app/_components/add-transaction-button'
 import type { ReactNode } from 'react'
 
 interface SummaryCardProps {
@@ -24,7 +24,7 @@ export function SummaryCard({ icon, title, amount, size = 'small' }: SummaryCard
           }).format(amount)}
         </p>
 
-        {/* {size === 'large' && <AddTransactionButton />} */}
+        {size === 'large' && <AddTransactionButton />}
       </CardContent>
     </Card>
   )
