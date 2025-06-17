@@ -14,11 +14,15 @@ CREATE TABLE "Transaction" (
     "type" "TransactionType" NOT NULL,
     "amount" DECIMAL(10,2) NOT NULL,
     "category" "TransactionCategory" NOT NULL,
-    "paymentMethod" "TransactionPaymentMethod" NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
+    "isFixed" BOOLEAN NOT NULL DEFAULT false,
+    "isInstallment" BOOLEAN NOT NULL DEFAULT false,
+    "totalInstallments" INTEGER DEFAULT 1,
+    "currentInstallment" INTEGER DEFAULT 1,
+    "installmentGroupId" TEXT,
 
     CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
 );

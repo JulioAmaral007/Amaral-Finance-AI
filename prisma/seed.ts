@@ -38,6 +38,7 @@ async function main() {
 
   // Transações por usuário
   for (const user of createdUsers) {
+    // Transações fixas
     await prisma.transaction.createMany({
       data: [
         {
@@ -45,25 +46,55 @@ async function main() {
           type: 'EXPENSE',
           amount: 1200.0,
           category: 'HOUSING',
-          paymentMethod: 'BANK_TRANSFER',
           date: new Date('2024-05-01'),
           userId: user.id,
+          isFixed: true,
         },
         {
           name: 'Salário',
           type: 'DEPOSIT',
           amount: 5000.0,
           category: 'SALARY',
-          paymentMethod: 'BANK_TRANSFER',
           date: new Date('2024-05-05'),
           userId: user.id,
+          isFixed: true,
         },
+      ],
+    })
+
+    // Transações parceladas
+    const installmentGroupId = crypto.randomUUID()
+    const installmentAmount = 1200.0
+    const totalInstallments = 6
+
+    for (let i = 0; i < totalInstallments; i++) {
+      const installmentDate = new Date('2024-05-01')
+      installmentDate.setMonth(installmentDate.getMonth() + i)
+
+      await prisma.transaction.create({
+        data: {
+          name: 'Notebook Dell',
+          type: 'EXPENSE',
+          amount: installmentAmount / totalInstallments,
+          category: 'OTHER',
+          date: installmentDate,
+          userId: user.id,
+          isInstallment: true,
+          totalInstallments,
+          currentInstallment: i + 1,
+          installmentGroupId,
+        },
+      })
+    }
+
+    // Transações normais
+    await prisma.transaction.createMany({
+      data: [
         {
           name: 'Mercado',
           type: 'EXPENSE',
           amount: 450.75,
           category: 'FOOD',
-          paymentMethod: 'CREDIT_CARD',
           date: new Date('2024-05-10'),
           userId: user.id,
         },
@@ -72,7 +103,6 @@ async function main() {
           type: 'EXPENSE',
           amount: 80.0,
           category: 'ENTERTAINMENT',
-          paymentMethod: 'PIX',
           date: new Date('2024-05-15'),
           userId: user.id,
         },
@@ -81,7 +111,6 @@ async function main() {
           type: 'INVESTMENT',
           amount: 1000.0,
           category: 'OTHER',
-          paymentMethod: 'BANK_TRANSFER',
           date: new Date('2024-05-20'),
           userId: user.id,
         },
@@ -90,7 +119,6 @@ async function main() {
           type: 'EXPENSE',
           amount: 120.0,
           category: 'HEALTH',
-          paymentMethod: 'DEBIT_CARD',
           date: new Date('2024-05-22'),
           userId: user.id,
         },

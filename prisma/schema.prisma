@@ -8,16 +8,20 @@ datasource db {
 }
 
 model Transaction {
-  id            String                   @id @default(uuid())
-  name          String
-  type          TransactionType
-  amount        Decimal                  @db.Decimal(10, 2)
-  category      TransactionCategory
-  paymentMethod TransactionPaymentMethod
-  date          DateTime
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  userId        String
+  id                 String              @id @default(uuid())
+  name               String
+  type               TransactionType
+  amount             Decimal             @db.Decimal(10, 2)
+  category           TransactionCategory
+  date               DateTime
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  userId             String
+  isFixed            Boolean             @default(false)
+  isInstallment      Boolean             @default(false)
+  totalInstallments  Int?                @default(1)
+  currentInstallment Int?                @default(1)
+  installmentGroupId String? // Para agrupar parcelas da mesma transação
 }
 
 enum TransactionType {
