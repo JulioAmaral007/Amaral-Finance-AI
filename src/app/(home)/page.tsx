@@ -26,7 +26,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div className="flex bg-background">
       <Sidebar />
-      <main className="h-dvh w-full max-w-screen-2xl mx-auto">
+      <main className="h-dvh w-full overflow-y-auto">
         <div className="flex flex-col space-y-4 p-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
