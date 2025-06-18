@@ -1,6 +1,13 @@
 'use client'
 
 import { getTransactions } from '@/_actions/get-transactions'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/_components/ui/select'
 import { getMonthName, getMonthNumber } from '@/_lib/installment-utils'
 import { BalanceChart } from '@/app/planning/_components/BalanceChart'
 import { ExpenseDetail } from '@/app/planning/_components/ExpenseDetail'
@@ -17,6 +24,13 @@ export default function PlanningPage() {
   const [selectedMonth, setSelectedMonth] = useState<MonthExpenses | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [scenarios, setScenarios] = useState<Expense[]>([])
+  const [customPercentages, setCustomPercentages] = useState<
+    Record<string, { bills: number; investment: number; savings: number }>
+  >({})
+  const [months, setMonths] = useState<MonthExpenses[]>([])
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i)
 
   const loadTransactions = useCallback(async () => {
     try {
@@ -87,50 +101,72 @@ export default function PlanningPage() {
     }
   }, [loadTransactions])
 
-  // Função para calcular as despesas de cada mês
-  const calculateMonthExpenses = (): MonthExpenses[] => {
-    const months: MonthExpenses[] = []
-    const currentDate = new Date()
+  const handleUpdatePercentages = (
+    monthNumber: number,
+    percentages: { bills: number; investment: number; savings: number }
+  ) => {
+    setCustomPercentages(prev => ({
+      ...prev,
+      [monthNumber]: percentages,
+    }))
 
-    // Inicializa os 12 meses
+    // Atualiza os meses com as novas porcentagens
+    setMonths(prevMonths =>
+      prevMonths.map(month =>
+        month.monthNumber === monthNumber ? { ...month, percentages } : month
+      )
+    )
+  }
+
+  const calculateMonthExpenses = useCallback((): MonthExpenses[] => {
+    const calculatedMonths: MonthExpenses[] = []
+
+    // Inicializa os 12 meses do ano selecionado
     for (let i = 0; i < 12; i++) {
-      const date = new Date(currentDate)
-      date.setMonth(currentDate.getMonth() + i)
+      const date = new Date(selectedYear, i, 1)
+      const monthNumber = getMonthNumber(date)
 
-      months.push({
+      calculatedMonths.push({
         month: getMonthName(date),
-        monthNumber: getMonthNumber(date),
+        monthNumber,
         fixedExpenses: 0,
         activeParcels: 0,
         totalProjected: 0,
         salary: 0,
         expenses: [],
+        percentages: customPercentages[monthNumber] || {
+          bills: 50,
+          investment: 30,
+          savings: 20,
+        },
       })
     }
 
-    // Distribui as despesas pelos meses
-    const allExpenses = [...expenses, ...scenarios]
+    // Filtra as despesas e cenários pelo ano selecionado
+    const allExpenses = [...expenses, ...scenarios].filter(expense => {
+      const expenseYear = new Date(expense.startDate).getFullYear()
+      return expenseYear === selectedYear
+    })
 
     for (const expense of allExpenses) {
       const startMonth = getMonthNumber(expense.startDate)
-      const monthIndex = months.findIndex(m => m.monthNumber === startMonth)
+      const monthIndex = calculatedMonths.findIndex(m => m.monthNumber === startMonth)
 
       if (monthIndex !== -1) {
         if (expense.isSalary) {
-          // Se for salário ou depósito, adiciona ao salário do mês
-          months[monthIndex].salary += expense.totalValue
-          months[monthIndex].expenses.push(expense)
+          calculatedMonths[monthIndex].salary += expense.totalValue
+          calculatedMonths[monthIndex].expenses.push(expense)
         } else if (expense.type === 'fixo') {
-          months[monthIndex].fixedExpenses += expense.totalValue
-          months[monthIndex].expenses.push(expense)
+          calculatedMonths[monthIndex].fixedExpenses += expense.totalValue
+          calculatedMonths[monthIndex].expenses.push(expense)
         } else if (expense.type === 'parcelado' && expense.parcels) {
           for (const parcel of expense.parcels) {
             const parcelMonth = getMonthNumber(parcel.dueDate)
-            const parcelMonthIndex = months.findIndex(m => m.monthNumber === parcelMonth)
+            const parcelMonthIndex = calculatedMonths.findIndex(m => m.monthNumber === parcelMonth)
 
             if (parcelMonthIndex !== -1) {
-              months[parcelMonthIndex].activeParcels += parcel.value
-              months[parcelMonthIndex].expenses.push({
+              calculatedMonths[parcelMonthIndex].activeParcels += parcel.value
+              calculatedMonths[parcelMonthIndex].expenses.push({
                 ...expense,
                 totalValue: parcel.value,
               })
@@ -140,13 +176,50 @@ export default function PlanningPage() {
       }
     }
 
-    // Calcula o total projetado para cada mês
-    for (const month of months) {
+    // Calcula o total projetado e ajusta as porcentagens para cada mês
+    for (const month of calculatedMonths) {
       month.totalProjected = month.fixedExpenses + month.activeParcels
+
+      if (month.salary > 0) {
+        // Calcula o percentual necessário para cobrir as despesas
+        const requiredPercentage = (month.totalProjected / month.salary) * 100
+
+        // Se o percentual necessário for maior que o definido, ajusta
+        if (requiredPercentage > month.percentages.bills) {
+          const excess = requiredPercentage - month.percentages.bills
+
+          // Ajusta o percentual de contas para cobrir todas as despesas
+          month.percentages.bills = requiredPercentage
+
+          // Reduz proporcionalmente investimento e reserva
+          const totalOther = month.percentages.investment + month.percentages.savings
+          if (totalOther > 0) {
+            const investmentProportion = month.percentages.investment / totalOther
+            const savingsProportion = month.percentages.savings / totalOther
+
+            month.percentages.investment = Math.max(
+              0,
+              month.percentages.investment - excess * investmentProportion
+            )
+            month.percentages.savings = Math.max(
+              0,
+              month.percentages.savings - excess * savingsProportion
+            )
+          } else {
+            month.percentages.investment = 0
+            month.percentages.savings = 0
+          }
+        }
+      }
     }
 
-    return months
-  }
+    return calculatedMonths
+  }, [expenses, scenarios, customPercentages, selectedYear])
+
+  useEffect(() => {
+    const calculatedMonths = calculateMonthExpenses()
+    setMonths(calculatedMonths)
+  }, [calculateMonthExpenses])
 
   const handleAddScenario = (scenario: {
     name: string
@@ -159,21 +232,19 @@ export default function PlanningPage() {
       name: scenario.name,
       type: 'parcelado',
       totalValue: scenario.value,
-      startDate: new Date(new Date().getFullYear(), scenario.startMonth - 1, 1),
+      startDate: new Date(new Date().getFullYear(), scenario.startMonth, 1),
       isActive: true,
       isSalary: false,
       parcels: Array.from({ length: scenario.installments }, (_, i) => ({
         number: i + 1,
         totalParcels: scenario.installments,
         value: scenario.value / scenario.installments,
-        dueDate: new Date(new Date().getFullYear(), scenario.startMonth - 1 + i, 1),
+        dueDate: new Date(new Date().getFullYear(), scenario.startMonth + i, 1),
       })),
     }
 
     setScenarios(prev => [...prev, newScenario])
   }
-
-  const months = calculateMonthExpenses()
 
   if (isLoading) {
     return (
@@ -191,10 +262,25 @@ export default function PlanningPage() {
   return (
     <div className="flex bg-background">
       <Sidebar />
-      <main className="h-dvh w-full max-w-screen-2xl mx-auto overflow-y-auto">
+      <main className="h-dvh w-full overflow-y-auto">
         <div className="flex flex-col space-y-4 p-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold tracking-tight">Planejamento</h1>
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={value => setSelectedYear(Number(value))}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Selecione o ano" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map(year => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -202,9 +288,16 @@ export default function PlanningPage() {
             <ScenarioSimulator months={months} onAddScenario={handleAddScenario} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {months.map(month => (
-              <MonthCard key={month.month} data={month} onClick={() => setSelectedMonth(month)} />
+              <MonthCard
+                key={month.month}
+                data={month}
+                onClick={() => setSelectedMonth(month)}
+                onUpdatePercentages={percentages =>
+                  handleUpdatePercentages(month.monthNumber, percentages)
+                }
+              />
             ))}
           </div>
 

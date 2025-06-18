@@ -26,4 +26,9 @@ export interface MonthExpenses {
   totalProjected: number
   salary: number
   expenses: Expense[]
+  percentages: {
+    bills: number
+    investment: number
+    savings: number
+  }
 }
