@@ -24,16 +24,20 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const dashboard = await getDashboard(month || currentMonth)
 
   return (
-    <div className="flex bg-background">
+    <div className="flex h-screen">
       <Sidebar />
-      <main className="h-dvh w-full overflow-y-auto">
-        <div className="flex flex-col space-y-4 p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-            <div className="flex items-center gap-3">
-              <TimeSelect />
-            </div>
+      <div className="flex-1 flex flex-col">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">Visão geral das suas finanças</p>
           </div>
+          <div className="flex items-center gap-3">
+            <TimeSelect />
+          </div>
+        </header>
+
+        <main className="flex-1 p-6 overflow-auto">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
             <div className="flex h-min flex-col gap-3 col-span-3">
               <SummaryCards month={month || currentMonth} {...dashboard} />
@@ -42,12 +46,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <ExpensesPerCategory expensesPerCategory={dashboard.totalExpensePerCategory} />
               </div>
             </div>
-            <div className="h-[calc(100dvh-100px)] col-span-1">
+            <div className="h-[calc(100vh-200px)] col-span-1">
               <LastTransactions lastTransactions={dashboard.lastTransactions} />
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }

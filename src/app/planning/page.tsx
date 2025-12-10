@@ -2,11 +2,11 @@
 
 import { getTransactions } from '@/_actions/get-transactions'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/_components/ui/select'
 import { getMonthName, getMonthNumber } from '@/_lib/installment-utils'
 import { BalanceChart } from '@/app/planning/_components/BalanceChart'
@@ -248,47 +248,58 @@ export default function PlanningPage() {
 
   if (isLoading) {
     return (
-      <div className="flex bg-background">
+      <div className="flex h-screen">
         <Sidebar />
-        <main className="h-dvh w-full max-w-screen-2xl mx-auto">
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">Carregando...</p>
-          </div>
-        </main>
+        <div className="flex-1 flex flex-col">
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold">Planejamento</h1>
+              <p className="text-muted-foreground">Planeje suas finanças</p>
+            </div>
+          </header>
+          <main className="flex-1 p-6 overflow-auto">
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Carregando...</p>
+            </div>
+          </main>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex bg-background">
+    <div className="flex h-screen">
       <Sidebar />
-      <main className="h-dvh w-full overflow-y-auto">
-        <div className="flex flex-col space-y-4 p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight">Planejamento</h1>
-            <Select
-              value={selectedYear.toString()}
-              onValueChange={value => setSelectedYear(Number(value))}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Selecione o ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map(year => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="flex-1 flex flex-col">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">Planejamento</h1>
+            <p className="text-muted-foreground">Planeje suas finanças</p>
           </div>
+          <Select
+            value={selectedYear.toString()}
+            onValueChange={value => setSelectedYear(Number(value))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Selecione o ano" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map(year => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </header>
 
+        <main className="flex-1 p-6 overflow-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BalanceChart months={months} />
             <ScenarioSimulator months={months} onAddScenario={handleAddScenario} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
             {months.map(month => (
               <MonthCard
                 key={month.month}
@@ -307,8 +318,8 @@ export default function PlanningPage() {
               onClose={() => setSelectedMonth(null)}
             />
           )}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
