@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,68 +10,213 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Transaction {
-  id                 String              @id @default(uuid())
-  name               String
-  type               TransactionType
-  amount             Decimal             @db.Decimal(10, 2)
-  category           TransactionCategory
-  date               DateTime
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  userId             String
-  isFixed            Boolean             @default(false)
-  isInstallment      Boolean             @default(false)
-  totalInstallments  Int?                @default(1)
-  currentInstallment Int?                @default(1)
-  installmentGroupId String? // Para agrupar parcelas da mesma transação
-}
-
-enum TransactionType {
-  DEPOSIT
-  EXPENSE
-  INVESTMENT
-}
-
-enum TransactionCategory {
-  HOUSING
-  TRANSPORTATION
-  FOOD
-  ENTERTAINMENT
-  HEALTH
-  UTILITY
-  SALARY
-  EDUCATION
-  OTHER
-}
-
-enum TransactionPaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  BANK_TRANSFER
-  BANK_SLIP
-  CASH
-  PIX
-  OTHER
-}
-
-model Subscription {
-  id        String   @id @default(uuid())
-  name      String
-  amount    Decimal  @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-}
-
 model User {
-  id       String @id @default(uuid())
-  name     String
-  email    String
-  password String
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Configurações do usuário
+  monthlyIncome    Decimal @default(0)
+  emergencyReserve Decimal @default(0)
+  emergencyGoal    Decimal @default(0)
+
+  // Configurações de notificação
+  expenseAlerts  Boolean @default(true)
+  goalReminders  Boolean @default(true)
+  aiSuggestions  Boolean @default(true)
+  monthlyReports Boolean @default(false)
+
+  // Configurações de aparência
+  theme             Theme   @default(SYSTEM)
+  currency          String  @default("BRL")
+  animationsEnabled Boolean @default(true)
+
+  // Relacionamentos
+  incomes              Income[]
+  fixedExpenses        FixedExpense[]
+  variableExpenses     VariableExpense[]
+  installmentPurchases InstallmentPurchase[]
+  investments          Investment[]
+  goals                Goal[]
+  aiAnalyses           AIAnalysis[]
+
+  @@map("users")
 }
 
-model UserSubscription {
-  id             String   @id @default(uuid())
-  userId         String
-  subscriptionId String
-  createdAt      DateTime @default(now())
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  color       String  @default("#6B7280")
+  icon        String  @default("DollarSign")
+
+  variableExpenses VariableExpense[]
+
+  @@map("categories")
+}
+
+model Income {
+  id          String     @id @default(cuid())
+  userId      String
+  type        IncomeType
+  amount      Decimal
+  frequency   Frequency
+  description String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("incomes")
+}
+
+model FixedExpense {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  amount      Decimal
+  frequency   Frequency @default(MONTHLY)
+  description String?
+  isActive    Boolean   @default(true)
+  dueDay      Int? // Dia do vencimento (1-31)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("fixed_expenses")
+}
+
+model VariableExpense {
+  id          String   @id @default(cuid())
+  userId      String
+  categoryId  String
+  amount      Decimal
+  description String?
+  date        DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@map("variable_expenses")
+}
+
+model InstallmentPurchase {
+  id                String   @id @default(cuid())
+  userId            String
+  description       String
+  totalAmount       Decimal
+  installmentAmount Decimal
+  totalInstallments Int
+  paidInstallments  Int      @default(0)
+  startDate         DateTime
+  isCompleted       Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("installment_purchases")
+}
+
+model Investment {
+  id           String         @id @default(cuid())
+  userId       String
+  type         InvestmentType
+  name         String
+  amount       Decimal
+  platform     String?
+  purchaseDate DateTime
+  currentValue Decimal?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("investments")
+}
+
+model Goal {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  targetAmount  Decimal
+  currentAmount Decimal  @default(0)
+  targetDate    DateTime
+  category      GoalType
+  isCompleted   Boolean  @default(false)
+  priority      Priority @default(MEDIUM)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("goals")
+}
+
+model AIAnalysis {
+  id              String   @id @default(cuid())
+  userId          String
+  analysisType    String // "monthly_summary", "goal_suggestion", "expense_optimization"
+  content         String // JSON com a análise
+  recommendations String[] // Array de recomendações
+  confidence      Float    @default(0.8)
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_analyses")
+}
+
+// Enums
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum IncomeType {
+  FIXED
+  VARIABLE
+}
+
+enum Frequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum InvestmentType {
+  FIXED_INCOME
+  VARIABLE_INCOME
+  EMERGENCY_RESERVE
+  REAL_ESTATE
+  CRYPTO
+}
+
+enum GoalType {
+  TRAVEL
+  CAR
+  HOUSE
+  EDUCATION
+  EMERGENCY
+  RETIREMENT
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
 }
