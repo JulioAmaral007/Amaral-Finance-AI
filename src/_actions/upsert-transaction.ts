@@ -1,7 +1,12 @@
 'use server'
 
-import { db } from '@/_lib/prisma'
-import type { TransactionCategory, TransactionType } from '@prisma/client'
+import { requireUser } from '@/_lib/auth'
+import { createClient } from '@/_lib/supabase/server'
+import type {
+  TransactionCategory,
+  TransactionPaymentMethod,
+  TransactionType,
+} from '@/types/database'
 import { revalidatePath } from 'next/cache'
 
 interface UpsertTransactionData {
@@ -10,76 +15,61 @@ interface UpsertTransactionData {
   amount: number
   type: TransactionType
   category: TransactionCategory
+  paymentMethod?: TransactionPaymentMethod | null
   date: Date
-  isFixed?: boolean
-  isInstallment?: boolean
-  currentInstallment?: number
-  totalInstallments?: number
-  isSalary?: boolean
 }
 
 export async function upsertTransaction(data: UpsertTransactionData) {
-  try {
-    console.log('Dados recebidos:', data)
-    console.log('Data da transação:', data.date)
+  const user = await requireUser()
+  const supabase = await createClient()
 
+  try {
     if (data.id) {
       // Atualização
-      const transaction = await db.transaction.update({
-        where: {
-          id: data.id,
-        },
-        data: {
+      const { data: transaction, error } = await supabase
+        .from('transactions')
+        .update({
           name: data.name,
           amount: data.amount,
           type: data.type,
           category: data.category,
-          date: data.date,
-          isFixed: data.isFixed ?? false,
-          isInstallment: data.isInstallment ?? false,
-          currentInstallment: data.currentInstallment,
-          totalInstallments: data.totalInstallments,
-        },
-      })
-      console.log('Transação atualizada:', transaction)
-      console.log('Data da transação atualizada:', transaction.date)
+          payment_method: data.paymentMethod,
+          date: data.date.toISOString(),
+        })
+        .eq('id', data.id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
 
-      // Forçar atualização da página
+      if (error) throw error
+
       revalidatePath('/')
-      revalidatePath('/planning')
+      revalidatePath('/transactions')
 
-      return {
-        ...transaction,
-        amount: Number(transaction.amount),
-      }
+      return transaction
     }
 
     // Criação
-    const transaction = await db.transaction.create({
-      data: {
+    const { data: transaction, error } = await supabase
+      .from('transactions')
+      .insert({
         name: data.name,
         amount: data.amount,
         type: data.type,
         category: data.category,
-        date: data.date,
-        isFixed: data.isFixed ?? false,
-        isInstallment: data.isInstallment ?? false,
-        currentInstallment: data.currentInstallment,
-        totalInstallments: data.totalInstallments,
-        userId: '1', // TODO: Implementar autenticação
-      },
-    })
-    console.log('Transação criada:', transaction)
-    console.log('Data da transação criada:', transaction.date)
+        payment_method: data.paymentMethod,
+        date: data.date.toISOString(),
+        user_id: user.id,
+      })
+      .select()
+      .single()
 
-    // Forçar atualização da página
+    if (error) throw error
+
     revalidatePath('/')
-    revalidatePath('/planning')
+    revalidatePath('/transactions')
 
-    return {
-      ...transaction,
-      amount: Number(transaction.amount),
-    }
+    return transaction
   } catch (error) {
     console.error('Erro ao salvar transação:', error)
     throw new Error('Falha ao salvar transação')

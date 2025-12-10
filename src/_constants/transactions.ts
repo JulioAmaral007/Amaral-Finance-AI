@@ -1,6 +1,10 @@
-import { TransactionCategory, TransactionType } from '@prisma/client'
+import type {
+  TransactionCategory,
+  TransactionPaymentMethod,
+  TransactionType,
+} from '@/types/database'
 
-export const TRANSACTION_CATEGORY_LABELS = {
+export const TRANSACTION_CATEGORY_LABELS: Record<TransactionCategory, string> = {
   EDUCATION: 'Educação',
   ENTERTAINMENT: 'Entretenimento',
   FOOD: 'Alimentação',
@@ -12,56 +16,103 @@ export const TRANSACTION_CATEGORY_LABELS = {
   UTILITY: 'Utilidades',
 }
 
-export const TRANSACTION_TYPE_OPTIONS = [
+export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
+  DEPOSIT: 'Ganho',
+  EXPENSE: 'Gasto',
+  INVESTMENT: 'Investimento',
+}
+
+export const TRANSACTION_PAYMENT_METHOD_LABELS: Record<TransactionPaymentMethod, string> = {
+  CREDIT_CARD: 'Cartão',
+  DEBIT_CARD: 'Débito',
+  BANK_TRANSFER: 'Transferência',
+  BANK_SLIP: 'Boleto',
+  CASH: 'Dinheiro',
+  PIX: 'Pix',
+  OTHER: 'Outro',
+}
+
+export const TRANSACTION_TYPE_OPTIONS: { value: TransactionType; label: string }[] = [
   {
-    value: TransactionType.EXPENSE,
-    label: 'Despesa',
+    value: 'DEPOSIT',
+    label: 'Ganho',
   },
   {
-    value: TransactionType.DEPOSIT,
-    label: 'Depósito',
+    value: 'EXPENSE',
+    label: 'Gasto',
   },
   {
-    value: TransactionType.INVESTMENT,
+    value: 'INVESTMENT',
     label: 'Investimento',
   },
 ]
 
-export const TRANSACTION_CATEGORY_OPTIONS = [
+export const TRANSACTION_PAYMENT_METHOD_OPTIONS: { value: TransactionPaymentMethod; label: string }[] = [
   {
-    value: TransactionCategory.EDUCATION,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.EDUCATION],
+    value: 'PIX',
+    label: 'Pix',
   },
   {
-    value: TransactionCategory.ENTERTAINMENT,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.ENTERTAINMENT],
+    value: 'CREDIT_CARD',
+    label: 'Cartão',
   },
   {
-    value: TransactionCategory.FOOD,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.FOOD],
+    value: 'DEBIT_CARD',
+    label: 'Débito',
   },
   {
-    value: TransactionCategory.HEALTH,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HEALTH],
+    value: 'BANK_TRANSFER',
+    label: 'Transferência',
   },
   {
-    value: TransactionCategory.HOUSING,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HOUSING],
+    value: 'BANK_SLIP',
+    label: 'Boleto',
   },
   {
-    value: TransactionCategory.OTHER,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.OTHER],
+    value: 'CASH',
+    label: 'Dinheiro',
   },
   {
-    value: TransactionCategory.SALARY,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.SALARY],
+    value: 'OTHER',
+    label: 'Outro',
+  },
+]
+
+export const TRANSACTION_CATEGORY_OPTIONS: { value: TransactionCategory; label: string }[] = [
+  {
+    value: 'HOUSING',
+    label: TRANSACTION_CATEGORY_LABELS.HOUSING,
   },
   {
-    value: TransactionCategory.TRANSPORTATION,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.TRANSPORTATION],
+    value: 'TRANSPORTATION',
+    label: TRANSACTION_CATEGORY_LABELS.TRANSPORTATION,
   },
   {
-    value: TransactionCategory.UTILITY,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.UTILITY],
+    value: 'FOOD',
+    label: TRANSACTION_CATEGORY_LABELS.FOOD,
+  },
+  {
+    value: 'ENTERTAINMENT',
+    label: TRANSACTION_CATEGORY_LABELS.ENTERTAINMENT,
+  },
+  {
+    value: 'HEALTH',
+    label: TRANSACTION_CATEGORY_LABELS.HEALTH,
+  },
+  {
+    value: 'EDUCATION',
+    label: TRANSACTION_CATEGORY_LABELS.EDUCATION,
+  },
+  {
+    value: 'SALARY',
+    label: TRANSACTION_CATEGORY_LABELS.SALARY,
+  },
+  {
+    value: 'UTILITY',
+    label: TRANSACTION_CATEGORY_LABELS.UTILITY,
+  },
+  {
+    value: 'OTHER',
+    label: TRANSACTION_CATEGORY_LABELS.OTHER,
   },
 ]
